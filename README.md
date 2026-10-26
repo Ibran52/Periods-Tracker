@@ -55,20 +55,20 @@ Copy `.env.example` to `.env` in the project root or respective directories:
 # Backend API (/server/.env)
 NODE_ENV=development
 PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/veyora
+MONGODB_URI=
 JWT_SECRET=replace_with_a_secure_random_string_min_32_characters_long
 JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=
 
 # Internal ML Service connection
-ML_SERVICE_URL=http://127.0.0.1:8000
+ML_SERVICE_URL=
 ML_SERVICE_API_KEY=veyora-internal-ml-key
 
 # Web Push Notifications (VAPID)
 # Generate with: npx web-push generate-vapid-keys
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:admin@veyora.local
+VAPID_SUBJECT=
 
 # ML Service (/ml-service/.env)
 ML_HOST=127.0.0.1
@@ -77,7 +77,7 @@ ML_API_KEY=veyora-internal-ml-key
 ML_MODEL_DIR=./models
 
 # Frontend Client (/client/.env)
-VITE_API_BASE_URL=http://localhost:5000/api/v1
+VITE_API_BASE_URL=
 ```
 
 ---
