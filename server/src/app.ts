@@ -3,7 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
-import { config } from "./config/env.js";
+import { config, assertRequiredEnvVars } from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import { authRouter } from "./routes/authRoutes.js";
 import { periodRouter } from "./routes/periodRoutes.js";
@@ -19,7 +19,11 @@ export const app = express();
 app.use(helmet());
 
 // Cross-Origin Resource Sharing
-const allowedOrigins = [config.corsOrigin, "http://localhost:5173", "http://localhost:4173", "http://127.0.0.1:5173", "http://127.0.0.1:4173"];
+const developmentOrigins = ["development", "test"].includes(config.env || "")
+  ? ["http://localhost:5173", "http://localhost:4173", "http://127.0.0.1:5173", "http://127.0.0.1:4173"]
+  : [];
+const allowedOrigins = Array.from(new Set([config.corsOrigin, ...developmentOrigins]))
+  .filter(Boolean);
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -94,6 +98,13 @@ app.use(errorHandler);
 
 // Start server when executed directly
 if (process.env.NODE_ENV !== "test") {
+  try {
+    assertRequiredEnvVars();
+  } catch (error) {
+    console.error((error as Error).message);
+    process.exit(1);
+  }
+
   connectDB()
     .then(() => {
       console.log("Connected to MongoDB successfully");
@@ -102,6 +113,9 @@ if (process.env.NODE_ENV !== "test") {
       });
     })
     .catch((err) => {
-      console.error("Failed to start server due to database connection error:", err);
+      console.error(
+        "Failed to start server due to database connection error:",
+        err instanceof Error ? err.name : "UnknownError"
+      );
     });
 }

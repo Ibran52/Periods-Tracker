@@ -7,6 +7,7 @@ import { CycleSettings } from "../src/models/CycleSettings.js";
 import { PeriodLog } from "../src/models/PeriodLog.js";
 import { PredictionSnapshot } from "../src/models/PredictionSnapshot.js";
 import { config } from "../src/config/env.js";
+import { extractAuthToken } from "./helpers/auth.js";
 
 const TEST_DB_URI = "mongodb://127.0.0.1:27017/veyora_test_cyclesync_e2e";
 
@@ -30,7 +31,7 @@ beforeAll(async () => {
       defaultPeriodDuration: 5
     });
 
-  userToken = regRes.body.data.token;
+  userToken = extractAuthToken(regRes);
 });
 
 afterAll(async () => {

@@ -6,7 +6,8 @@ import { User } from "../src/models/User.js";
 import { CycleSettings } from "../src/models/CycleSettings.js";
 import { PeriodLog } from "../src/models/PeriodLog.js";
 import { PushSubscription } from "../src/models/PushSubscription.js";
-import { runScheduledReminders } from "../src/services/notificationService.js";
+import { runScheduledReminders, sendNotification } from "../src/services/notificationService.js";
+import { extractAuthToken } from "./helpers/auth.js";
 
 const TEST_DB_URI = "mongodb://127.0.0.1:27017/veyora_test_notifications";
 
@@ -31,7 +32,7 @@ beforeAll(async () => {
       defaultPeriodDuration: 5
     });
 
-  token = res.body.data.token;
+  token = extractAuthToken(res);
   userId = res.body.data.user.id;
 });
 
@@ -84,6 +85,38 @@ describe("Phase 6: Web Push Notifications & Scheduled Reminder Engine", () => {
     const doc = await PushSubscription.findOne({ userId });
     expect(doc).not.toBeNull();
     expect(doc?.endpoint).toBe(subPayload.endpoint);
+  });
+
+  it("rejects push subscriptions that target untrusted hosts", async () => {
+    const res = await request(app)
+      .post("/api/v1/notifications/subscribe")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        endpoint: "https://127.0.0.1/admin",
+        keys: {
+          p256dh: "test-p256dh-key",
+          auth: "test-auth-key"
+        }
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(await PushSubscription.countDocuments({
+      userId,
+      endpoint: "https://127.0.0.1/admin"
+    })).toBe(0);
+  });
+
+  it("does not send notifications to untrusted existing endpoints", async () => {
+    const delivered = await sendNotification(
+      {
+        endpoint: "https://127.0.0.1/admin",
+        keys: { p256dh: "test-p256dh-key", auth: "test-auth-key" }
+      },
+      { title: "Test", body: "Test" }
+    );
+
+    expect(delivered).toBe(false);
   });
 
   it("handles duplicate subscription gracefully via upsert", async () => {

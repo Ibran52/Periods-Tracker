@@ -32,11 +32,27 @@ export async function getSettings(req: Request, res: Response, next: NextFunctio
 
 export async function updateSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const allowedFields = {
+      defaultCycleLength: req.body.defaultCycleLength,
+      defaultPeriodDuration: req.body.defaultPeriodDuration,
+      reminderDaysBefore: req.body.reminderDaysBefore,
+      remindersEnabled: req.body.remindersEnabled,
+      modelPreference: req.body.modelPreference
+    };
+
+    const sanitizedUpdate = Object.entries(allowedFields).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
     const settings = await CycleSettings.findOneAndUpdate(
       { userId: req.user!.id },
-      { $set: req.body },
+      { $set: sanitizedUpdate },
       { new: true, upsert: true }
     );
+
     res.status(200).json({ success: true, data: settings });
   } catch (error) {
     next(error);

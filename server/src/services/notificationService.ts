@@ -5,6 +5,30 @@ import { CycleSettings } from "../models/CycleSettings.js";
 import { PeriodLog } from "../models/PeriodLog.js";
 import { computeCycleStats, addDays, formatDate, parseDate } from "./cycleService.js";
 
+const trustedPushHosts = new Set([
+  "fcm.googleapis.com",
+  "updates.push.services.mozilla.com",
+  "web.push.apple.com"
+]);
+const trustedPushHostSuffixes = [".notify.windows.com"];
+
+export function isAllowedPushEndpoint(endpoint: string): boolean {
+  try {
+    const url = new URL(endpoint);
+    const hostname = url.hostname.toLowerCase();
+    const trustedHost = trustedPushHosts.has(hostname) ||
+      trustedPushHostSuffixes.some((suffix) => hostname.endsWith(suffix));
+
+    return url.protocol === "https:" &&
+      !url.username &&
+      !url.password &&
+      (!url.port || url.port === "443") &&
+      trustedHost;
+  } catch {
+    return false;
+  }
+}
+
 // Initialize VAPID details if available
 if (config.vapidPublicKey && config.vapidPrivateKey) {
   try {
@@ -30,17 +54,29 @@ export async function subscribe(
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
   timezone = "UTC"
 ): Promise<IPushSubscription> {
-  const existing = await PushSubscription.findOneAndUpdate(
-    { endpoint: subscription.endpoint },
-    {
-      userId,
-      endpoint: subscription.endpoint,
-      keys: subscription.keys,
-      timezone
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
-  return existing;
+  if (!isAllowedPushEndpoint(subscription.endpoint)) {
+    throw new Error("Push endpoint must use an approved HTTPS push service.");
+  }
+
+  const existing = await PushSubscription.findOne({ endpoint: subscription.endpoint });
+
+  if (existing) {
+    if (existing.userId.toString() !== userId) {
+      throw new Error("Push subscription endpoint is already registered to another user.");
+    }
+
+    existing.keys = subscription.keys;
+    existing.timezone = timezone;
+    await existing.save();
+    return existing;
+  }
+
+  return PushSubscription.create({
+    userId,
+    endpoint: subscription.endpoint,
+    keys: subscription.keys,
+    timezone
+  });
 }
 
 export async function unsubscribe(userId: string, endpoint: string): Promise<boolean> {
@@ -53,6 +89,10 @@ export async function sendNotification(
   payload: PushPayload
 ): Promise<boolean> {
   try {
+    if (!isAllowedPushEndpoint(sub.endpoint)) {
+      return false;
+    }
+
     if (!config.vapidPublicKey || !config.vapidPrivateKey || config.env === "test" || process.env.NODE_ENV === "test") {
       // In test mode or when keys are absent, simulate successful push delivery
       return true;

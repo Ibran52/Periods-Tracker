@@ -45,6 +45,11 @@ export async function requestMLPrediction(
   defaultCycleLength: number,
   modelPreference?: string
 ): Promise<MLPredictResult> {
+  if (!config.mlServiceApiKey) {
+    console.warn("[ml-client] prediction skipped because the ML service API key is not configured");
+    return { data: null, failureReason: "unavailable" };
+  }
+
   const t0 = Date.now();
   try {
     const url = `${config.mlServiceUrl}/v1/predict`;
@@ -83,6 +88,10 @@ export async function requestMLPrediction(
 }
 
 export async function requestMLEvaluation(): Promise<MLEvaluateResponse | null> {
+  if (!config.mlServiceApiKey) {
+    return null;
+  }
+
   try {
     const url = `${config.mlServiceUrl}/v1/evaluate`;
     const response = await fetch(url, {

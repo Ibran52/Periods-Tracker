@@ -24,10 +24,10 @@ async function testConnection(): Promise<void> {
 
     await mongoose.disconnect();
     process.exit(0);
-  } catch (error: any) {
+  } catch (error) {
     console.error("-----------------------------------------");
     console.error(" MongoDB Connection Test: FAILED");
-    console.error(` Error:      ${error.message}`);
+    console.error(` Error type: ${error instanceof Error ? error.name : "UnknownError"}`);
     console.error("-----------------------------------------");
     process.exit(1);
   }

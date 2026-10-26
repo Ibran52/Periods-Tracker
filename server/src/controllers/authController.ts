@@ -46,12 +46,11 @@ function generateToken(userId: string, email: string): string {
 }
 
 function sendAuthResponse(res: Response, statusCode: number, user: any, cycleSettings: any, token: string): void {
-  // Set HttpOnly cookie
   res.cookie("token", token, {
     httpOnly: true,
     secure: config.env === "production",
     sameSite: config.env === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000
   });
 
   res.status(statusCode).json({
@@ -71,8 +70,7 @@ function sendAuthResponse(res: Response, statusCode: number, user: any, cycleSet
             reminderDaysBefore: cycleSettings.reminderDaysBefore,
             remindersEnabled: cycleSettings.remindersEnabled
           }
-        : null,
-      token
+        : null
     }
   });
 }

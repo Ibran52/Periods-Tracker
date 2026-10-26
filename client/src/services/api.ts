@@ -29,10 +29,10 @@ export const authApi = {
     password: string;
     defaultCycleLength?: number;
     defaultPeriodDuration?: number;
-  }) => request<{ success: true; data: { user: User; cycleSettings: CycleSettings; token: string } }>("/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  }) => request<{ success: true; data: { user: User; cycleSettings: CycleSettings } }> ("/auth/register", { method: "POST", body: JSON.stringify(body) }),
 
   login: (body: { email: string; password: string }) =>
-    request<{ success: true; data: { user: User; cycleSettings: CycleSettings; token: string } }>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+    request<{ success: true; data: { user: User; cycleSettings: CycleSettings } }> ("/auth/login", { method: "POST", body: JSON.stringify(body) }),
 
   logout: () => request<{ success: true }>("/auth/logout", { method: "POST" }),
 

@@ -7,7 +7,11 @@ from fastapi.testclient import TestClient
 from features import extract_features, features_to_vector
 from baseline import predict_baseline
 from predict import predict_cycle
-from app import app, API_KEY
+
+TEST_API_KEY = "unit-test-only-ml-api-key-not-for-runtime"
+os.environ["ML_API_KEY"] = TEST_API_KEY
+
+from app import app, validate_api_key_configuration
 
 client = TestClient(app)
 
@@ -57,7 +61,7 @@ def test_fastapi_predict_unauthorized():
     assert res.status_code == 401
 
 def test_fastapi_predict_authorized():
-    headers = {"X-ML-API-Key": API_KEY}
+    headers = {"X-ML-API-Key": TEST_API_KEY}
     res = client.post(
         "/v1/predict",
         json={"cycle_lengths": [28.0, 29.0, 30.0, 28.0]},
@@ -68,3 +72,16 @@ def test_fastapi_predict_authorized():
     assert "predicted_cycle_length" in data
     assert "uncertainty_days" in data
     assert "method" in data
+
+def test_ml_api_key_configuration_rejects_missing_or_weak_keys(monkeypatch):
+    monkeypatch.delenv("ML_API_KEY", raising=False)
+    monkeypatch.delenv("ML_SERVICE_API_KEY", raising=False)
+    with pytest.raises(RuntimeError):
+        validate_api_key_configuration()
+
+    monkeypatch.setenv("ML_API_KEY", "short")
+    with pytest.raises(RuntimeError):
+        validate_api_key_configuration()
+
+    monkeypatch.setenv("ML_API_KEY", TEST_API_KEY)
+    validate_api_key_configuration()

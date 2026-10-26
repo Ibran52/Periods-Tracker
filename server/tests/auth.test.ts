@@ -4,6 +4,7 @@ import { app } from "../src/app.js";
 import { connectDB, disconnectDB } from "../src/config/db.js";
 import { User } from "../src/models/User.js";
 import { CycleSettings } from "../src/models/CycleSettings.js";
+import { extractAuthToken } from "./helpers/auth.js";
 
 const TEST_DB_URI = "mongodb://127.0.0.1:27017/veyora_test";
 
@@ -49,9 +50,8 @@ describe("Phase 1: API Foundation & Authentication", () => {
     expect(res.body.data.user.name).toBe(testUser.name);
     expect(res.body.data.user.passwordHash).toBeUndefined();
     expect(res.body.data.cycleSettings.defaultCycleLength).toBe(29);
-    expect(res.body.data.token).toBeDefined();
-
-    authToken = res.body.data.token;
+    expect(res.body.data.token).toBeUndefined();
+    authToken = extractAuthToken(res);
   });
 
   it("should reject duplicate email registration with 409", async () => {
@@ -77,7 +77,7 @@ describe("Phase 1: API Foundation & Authentication", () => {
     expect(res.body.errors).toBeDefined();
   });
 
-  it("should log in with valid credentials and return auth token", async () => {
+  it("should log in with valid credentials and set an HttpOnly auth cookie", async () => {
     const res = await request(app)
       .post("/api/v1/auth/login")
       .send({
@@ -88,7 +88,8 @@ describe("Phase 1: API Foundation & Authentication", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.user.email).toBe(testUser.email);
-    expect(res.body.data.token).toBeDefined();
+    expect(res.body.data.token).toBeUndefined();
+    expect(res.headers["set-cookie"]?.[0]).toContain("HttpOnly");
   });
 
   it("should reject login with wrong password with 401", async () => {

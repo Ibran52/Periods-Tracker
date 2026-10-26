@@ -6,6 +6,9 @@ import pytest
 import numpy as np
 from fastapi.testclient import TestClient
 
+TEST_API_KEY = "unit-test-only-ml-api-key-not-for-runtime"
+os.environ["ML_API_KEY"] = TEST_API_KEY
+
 from cycle_sync_adapter import (
     CycleSyncAdapter,
     scale_features,
@@ -17,10 +20,10 @@ from cycle_sync_adapter import (
     MAX_PLAUSIBLE_CYCLE
 )
 from predict import predict_cycle
-from app import app, API_KEY
+from app import app
 
 client = TestClient(app)
-AUTH_HEADERS = {"X-ML-API-Key": API_KEY}
+AUTH_HEADERS = {"X-ML-API-Key": TEST_API_KEY}
 
 
 def test_scaler_numerical_equivalence():

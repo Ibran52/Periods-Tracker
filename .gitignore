@@ -8,10 +8,15 @@ coverage/
 
 # Environment variables
 .env
+.env.example
+.env.*
 .env.local
 .env.development.local
 .env.test.local
+.env.production
 .env.production.local
+.env.staging
+.env.*.local
 
 # Python
 __pycache__/

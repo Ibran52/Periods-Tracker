@@ -15,11 +15,26 @@ export const symptomSchema = z.object({
 export async function getSymptoms(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { month } = req.query;
-    let query: any = { userId: req.user!.id };
+    const query: any = { userId: req.user!.id };
 
-    if (month && typeof month === "string") {
-      // e.g. "2026-11" matches regex ^2026-11
-      query.date = { $regex: `^${month}` };
+    if (month !== undefined) {
+      if (typeof month !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid month format. Use YYYY-MM."
+        });
+        return;
+      }
+
+      const [year, monthNumber] = month.split("-").map(Number);
+      const nextMonth = monthNumber === 12 ? 1 : monthNumber + 1;
+      const nextYear = monthNumber === 12 ? year + 1 : year;
+      const nextMonthLabel = String(nextMonth).padStart(2, "0");
+
+      query.date = {
+        $gte: `${month}-01`,
+        $lt: `${nextYear}-${nextMonthLabel}-01`
+      };
     }
 
     const logs = await SymptomLog.find(query).sort({ date: -1 });

@@ -12,7 +12,20 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 from predict import predict_cycle, get_model, get_cycle_sync_adapter
 from features import extract_features
 
-API_KEY = os.environ.get("ML_API_KEY") or os.environ.get("ML_SERVICE_API_KEY", "")
+API_KEY_MIN_LENGTH = 32
+
+def configured_api_key() -> Optional[str]:
+    for value in (os.environ.get("ML_API_KEY"), os.environ.get("ML_SERVICE_API_KEY")):
+        if value and value.strip():
+            return value.strip()
+    return None
+
+def validate_api_key_configuration() -> None:
+    key = configured_api_key()
+    if not key or len(key) < API_KEY_MIN_LENGTH or key.lower().startswith(("replace", "your", "change_me", "dev-ml-api-key")):
+        raise RuntimeError(
+            "Configure ML_API_KEY or ML_SERVICE_API_KEY with a unique value of at least 32 characters."
+        )
 
 app = FastAPI(
     title="Veyora Machine Learning Service",
@@ -22,6 +35,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 def startup_event():
+    validate_api_key_configuration()
     # Pre-warm model artifacts into memory to eliminate first-request latency
     get_model()
     adapter = get_cycle_sync_adapter()
@@ -48,7 +62,7 @@ class PredictResponse(BaseModel):
     message: str
 
 def verify_api_key(x_ml_api_key: Optional[str] = Header(None)):
-    expected_key = os.environ.get("ML_API_KEY") or os.environ.get("ML_SERVICE_API_KEY") or API_KEY
+    expected_key = configured_api_key()
     if not expected_key or x_ml_api_key != expected_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,16 +70,24 @@ def verify_api_key(x_ml_api_key: Optional[str] = Header(None)):
         )
 
 @app.get("/v1/health")
-def health():
-    _, metrics = get_model()
-    from predict import get_cycle_sync_adapter
-    adapter = get_cycle_sync_adapter()
+def health(x_ml_api_key: Optional[str] = Header(None)):
+    expected_key = configured_api_key()
+
+    if expected_key and x_ml_api_key == expected_key:
+        _, metrics = get_model()
+        from predict import get_cycle_sync_adapter
+        adapter = get_cycle_sync_adapter()
+        return {
+            "status": "ok",
+            "service": "veyora-ml",
+            "model_loaded": metrics is not None,
+            "model_version": metrics.get("model_version") if metrics else None,
+            "cycle_sync_available": adapter.is_available() if adapter else False
+        }
+
     return {
         "status": "ok",
-        "service": "veyora-ml",
-        "model_loaded": metrics is not None,
-        "model_version": metrics.get("model_version") if metrics else None,
-        "cycle_sync_available": adapter.is_available() if adapter else False
+        "service": "veyora-ml"
     }
 
 @app.post("/v1/predict", response_model=PredictResponse)

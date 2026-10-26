@@ -1,12 +1,19 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { config } from "../config/env.js";
-import { subscribe, unsubscribe, sendNotification } from "../services/notificationService.js";
+import {
+  isAllowedPushEndpoint,
+  subscribe,
+  unsubscribe,
+  sendNotification
+} from "../services/notificationService.js";
 import { PushSubscription } from "../models/PushSubscription.js";
 
 export const subscribeSchema = z.object({
   body: z.object({
-    endpoint: z.string().url("Valid push endpoint URL is required"),
+    endpoint: z.string()
+      .url("Valid push endpoint URL is required")
+      .refine(isAllowedPushEndpoint, "Push endpoint must use an approved HTTPS push service"),
     keys: z.object({
       p256dh: z.string().min(1, "p256dh key is required"),
       auth: z.string().min(1, "auth key is required")
@@ -44,7 +51,15 @@ export async function subscribeNotification(
       message: "Push notification subscription registered successfully",
       data: sub
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("already registered to another user")) {
+      res.status(409).json({
+        success: false,
+        message: "This push notification endpoint is already registered to another user."
+      });
+      return;
+    }
+
     next(error);
   }
 }

@@ -97,12 +97,14 @@ export async function getNextPrediction(req: Request, res: Response, next: NextF
       if (modelPreference === "baseline") {
         fallbackReason = "user_preference_baseline";
         mlStatus = "bypassed";
+      } else if (stats.completedCycles < (modelPreference === "cycle_sync" ? 3 : 4)) {
+        fallbackReason = "insufficient_history";
+        mlStatus = "fallback";
       } else if (mlResult?.failureReason) {
         fallbackReason = mlResult.failureReason;
         mlStatus = "fallback";
       } else {
-        const requiredCycles = modelPreference === "cycle_sync" ? 3 : 4;
-        fallbackReason = stats.completedCycles < requiredCycles ? "insufficient_history" : "ml_unavailable";
+        fallbackReason = "ml_unavailable";
         mlStatus = "fallback";
       }
       console.log(`[prediction] fallback_to=local_${method} reason=${fallbackReason} cycles_used=${stats.completedCycles}`);

@@ -9,6 +9,7 @@ import { PeriodLog } from "../src/models/PeriodLog.js";
 import { SymptomLog } from "../src/models/SymptomLog.js";
 import { PredictionSnapshot } from "../src/models/PredictionSnapshot.js";
 import { config } from "../src/config/env.js";
+import { extractAuthToken } from "./helpers/auth.js";
 
 const TEST_DB_URI = "mongodb://127.0.0.1:27017/veyora_test_security";
 
@@ -36,7 +37,7 @@ beforeAll(async () => {
       defaultCycleLength: 28,
       defaultPeriodDuration: 5
     });
-  tokenA = resA.body.data.token;
+  tokenA = extractAuthToken(resA);
   userIdA = resA.body.data.user.id;
 
   // Register User B
@@ -49,7 +50,7 @@ beforeAll(async () => {
       defaultCycleLength: 30,
       defaultPeriodDuration: 6
     });
-  tokenB = resB.body.data.token;
+  tokenB = extractAuthToken(resB);
   userIdB = resB.body.data.user.id;
 });
 

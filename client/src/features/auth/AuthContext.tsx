@@ -5,7 +5,6 @@ import { authApi } from "../../services/api";
 interface AuthState {
   user: User | null;
   cycleSettings: CycleSettings | null;
-  token: string | null;
   loading: boolean;
 }
 
@@ -23,45 +22,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
     cycleSettings: null,
-    token: localStorage.getItem("vy_token") || localStorage.getItem("pp_token"),
     loading: true,
   });
 
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem("vy_token") || localStorage.getItem("pp_token");
-    if (!token) {
-      setState((s) => ({ ...s, loading: false, user: null }));
-      return;
-    }
     try {
       const res = await authApi.me();
-      setState({ user: res.data.user, cycleSettings: res.data.cycleSettings, token, loading: false });
+      setState({ user: res.data.user, cycleSettings: res.data.cycleSettings, loading: false });
     } catch {
-      localStorage.removeItem("vy_token");
-      localStorage.removeItem("pp_token");
-      setState({ user: null, cycleSettings: null, token: null, loading: false });
+      setState({ user: null, cycleSettings: null, loading: false });
     }
   }, []);
 
-  useEffect(() => { refreshUser(); }, [refreshUser]);
+  useEffect(() => { void refreshUser(); }, [refreshUser]);
 
   const login = async (email: string, password: string) => {
     const res = await authApi.login({ email, password });
-    localStorage.setItem("vy_token", res.data.token);
-    setState({ user: res.data.user, cycleSettings: res.data.cycleSettings, token: res.data.token, loading: false });
+    setState({ user: res.data.user, cycleSettings: res.data.cycleSettings, loading: false });
   };
 
   const register = async (data: Parameters<typeof authApi.register>[0]) => {
     const res = await authApi.register(data);
-    localStorage.setItem("vy_token", res.data.token);
-    setState({ user: res.data.user, cycleSettings: res.data.cycleSettings, token: res.data.token, loading: false });
+    setState({ user: res.data.user, cycleSettings: res.data.cycleSettings, loading: false });
   };
 
   const logout = async () => {
     await authApi.logout().catch(() => {});
-    localStorage.removeItem("vy_token");
-    localStorage.removeItem("pp_token");
-    setState({ user: null, cycleSettings: null, token: null, loading: false });
+    setState({ user: null, cycleSettings: null, loading: false });
   };
 
   const updateUser = (updates: Partial<User>) => {
