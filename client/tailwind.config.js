@@ -8,45 +8,49 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: "#faf5ff",
-          100: "#f3e8ff",
-          200: "#e9d5ff",
-          300: "#d8b4fe",
-          400: "#c084fc",
-          500: "#a855f7",
-          600: "#9333ea",
-          700: "#7e22ce",
-          800: "#6b21a8",
-          900: "#581c87",
+        plum: {
+          50: "#fbf6fb",
+          100: "#f6edf5",
+          200: "#eddceb",
+          300: "#dfc1dc",
+          400: "#cc9ec8",
+          500: "#b57ab0",
+          600: "#995e94",
+          700: "#7c4978",
+          800: "#583b58",
+          900: "#4a324a",
+          950: "#301e30",
         },
-        roseplum: {
-          50: "#fdf2f8",
-          100: "#fce7f3",
-          200: "#fbcfe8",
-          300: "#f472b6",
-          400: "#e879f9",
-          500: "#ec4899",
-          600: "#db2777",
-          700: "#be185d",
+        blush: {
+          50: "#fdf8fa",
+          100: "#faf5f7",
+          200: "#f5e6ed",
+          300: "#eed2df",
+          400: "#e4b4cb",
+          500: "#d985b7",
+          600: "#c767a1",
+          700: "#ad4d86",
+          800: "#8e406e",
+          900: "#74385b",
         },
-        darkbg: {
-          base: "#0c0a12",
-          surface: "#161222",
-          card: "#1e1730",
-          border: "#2f244a",
-          hover: "#2a2142"
+        phase: {
+          menstruation: "#E05A8D",
+          follicular: "#F69988",
+          ovulation: "#D884B6",
+          luteal: "#9D72BE",
         },
-        lightbg: {
-          base: "#faf8fd",
-          surface: "#ffffff",
-          card: "#f4f0fb",
-          border: "#e5ddf5",
-          hover: "#ebe4f8"
-        }
+        softsurface: "#FFFFFF",
+        softbg: "#FAF5F7",
+        softborder: "#EFE4EC",
       },
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        sans: ["'Plus Jakarta Sans'", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+      },
+      boxShadow: {
+        soft: "0 10px 30px -10px rgba(180, 140, 170, 0.12)",
+        card: "0 8px 24px -6px rgba(140, 100, 130, 0.08)",
+        glow: "0 0 40px rgba(224, 90, 141, 0.15)",
+        plum: "0 8px 20px -4px rgba(80, 55, 80, 0.3)",
       }
     },
   },

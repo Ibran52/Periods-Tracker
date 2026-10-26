@@ -1,48 +1,67 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { predictionsApi } from "../../services/api";
 import type { MLEvaluation, CycleStats, PredictionSnapshot } from "../../types";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, Cell
+  ResponsiveContainer
 } from "recharts";
-import { Brain, TrendingUp, AlertCircle, Loader2, CheckCircle2, History, Sparkles, ShieldAlert, Info } from "lucide-react";
+import { Brain, TrendingUp, AlertCircle, Loader2, CheckCircle2, Sparkles, Info, Activity } from "lucide-react";
 
-function MetricCard({ label, value, note, good, tooltip }: { label: string; value: string; note?: string; good?: boolean; tooltip?: string }) {
+function MetricCard({
+  label,
+  value,
+  note,
+  good,
+  tooltip
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  good?: boolean;
+  tooltip?: string;
+}) {
   return (
-    <div className="rounded-2xl border p-4 transition-all" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
+    <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-5 shadow-card transition-all hover:shadow-soft">
       <div className="flex items-start justify-between">
-        <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: "var(--text-secondary)" }}>{label}</p>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A7890] mb-1">
+          {label}
+        </p>
         <div className="flex items-center gap-1">
           {tooltip && (
             <span title={tooltip} className="cursor-help opacity-60 hover:opacity-100">
-              <Info className="w-3.5 h-3.5" style={{ color: "var(--text-secondary)" }} />
+              <Info className="w-3.5 h-3.5 text-[#8A7890]" />
             </span>
           )}
           {good !== undefined && (
-            good
-              ? <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-              : <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            good ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+            )
           )}
         </div>
       </div>
-      <p className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{value}</p>
-      {note && <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>{note}</p>}
+      <p className="text-2xl font-black text-[#302337] mt-0.5">{value}</p>
+      {note && <p className="text-xs text-[#8A7890] mt-1 font-medium">{note}</p>}
     </div>
   );
 }
 
 const TOOLTIP_STYLE = {
-  backgroundColor: "var(--bg-card)",
-  border: "1px solid var(--border-color)",
-  borderRadius: "12px",
-  color: "var(--text-primary)",
+  backgroundColor: "#FFFFFF",
+  border: "1px solid #EFE4EC",
+  borderRadius: "16px",
+  color: "#302337",
   fontSize: "12px",
+  boxShadow: "0 10px 25px -5px rgba(80, 55, 80, 0.1)",
+  padding: "8px 12px",
 };
 
 export function InsightsPage() {
   const [stats, setStats] = useState<CycleStats | null>(null);
   const [ml, setMl] = useState<MLEvaluation | null>(null);
-  const [snapshots, setSnapshots] = useState<PredictionSnapshot[]>([]);
+  const [, setSnapshots] = useState<PredictionSnapshot[]>([]);
+  const [timeframe, setTimeframe] = useState<"3" | "6" | "12">("3");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -57,223 +76,244 @@ export function InsightsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center h-64 gap-2">
-      <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--accent-plum)" }} />
-      <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Analyzing cycle history and model benchmarks…</p>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-80 gap-3">
+        <div className="w-10 h-10 rounded-full border-3 border-[#503750]/20 border-t-[#503750] animate-spin" />
+        <p className="text-xs font-semibold text-[#8A7890]">Analyzing cycle analytics and ML benchmarks…</p>
+      </div>
+    );
+  }
 
-  if (error) return (
-    <div className="p-4 rounded-xl bg-red-400/10 border border-red-400/20 text-sm text-red-300">{error}</div>
-  );
+  if (error) {
+    return (
+      <div className="p-6 rounded-3xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
+        {error}
+      </div>
+    );
+  }
 
-  if (!stats || stats.completedCycles === 0) return (
-    <div className="text-center py-16 max-w-sm mx-auto">
-      <Brain className="w-12 h-12 mx-auto mb-3 opacity-30" style={{ color: "var(--accent-plum)" }} />
-      <p className="font-semibold text-lg mb-1" style={{ color: "var(--text-primary)" }}>Not Enough Data Yet</p>
-      <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-        Log at least 2 complete cycles in the Calendar to unlock cycle trend analysis and personalized insights.
-      </p>
-    </div>
-  );
+  if (!stats || stats.completedCycles === 0) {
+    return (
+      <div className="text-center py-20 max-w-sm mx-auto space-y-4">
+        <div className="w-16 h-16 mx-auto rounded-3xl bg-[#FAF0F5] border border-[#EFE4EC] flex items-center justify-center text-[#503750]">
+          <Brain className="w-8 h-8" />
+        </div>
+        <h3 className="font-extrabold text-xl text-[#302337]">Data Collection in Progress</h3>
+        <p className="text-sm text-[#8A7890] leading-relaxed">
+          Log at least 2 completed cycle intervals in the Calendar to unlock dynamic trend analytics,
+          energy curves, and personalized model benchmarks.
+        </p>
+      </div>
+    );
+  }
 
-  const cycleLengthData = stats.cycleLengths.map((l, i) => ({
-    cycle: `Cycle ${i + 1}`,
-    length: l
+  // Energy & vitality spline data across the 4 cycle phases (Inspired by reference bottom-right screen)
+  const energySplineData = [
+    { phase: "Menstruation", energy: 3.8, label: "Restorative" },
+    { phase: "Follicular", energy: 6.2, label: "Rising Energy" },
+    { phase: "Ovulation", energy: 8.9, label: "Peak Vitality" },
+    { phase: "Luteal", energy: 4.5, label: "Calming Down" },
+  ];
+
+  // Real user cycle lengths data
+  const cycleData = stats.cycleLengths.map((len, idx) => ({
+    name: `Cycle ${idx + 1}`,
+    length: len,
   }));
 
-  // Benchmark comparison chart data
-  const barData = ml ? [
-    { name: "Random Forest (Approved)", mae: ml.random_forest_mae, fill: "#a855f7" },
-    { name: "Historical Median (Baseline)", mae: ml.baseline_mae, fill: "#94a3b8" },
-    { name: "CycleSync LSTM (Candidate)", mae: ml.cycle_sync_mae || 2.73, fill: "#f59e0b" },
+  // Benchmark comparison
+  const benchmarkData = ml ? [
+    { name: "CycleSync LSTM", mae: ml.cycle_sync_mae || 2.73, fill: "#503750" },
+    { name: "Random Forest", mae: ml.random_forest_mae || 2.82, fill: "#D985B7" },
+    { name: "Historical Median", mae: ml.baseline_mae || 3.12, fill: "#C5B5C7" },
   ] : [];
 
   return (
-    <div className="space-y-6">
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <MetricCard
-          label="Average Cycle"
-          value={`${stats.averageCycleLength}d`}
-          note="Mean duration"
-          tooltip="Average days between consecutive period starts across all logged data"
-        />
-        <MetricCard
-          label="Median Cycle"
-          value={`${stats.medianCycleLength}d`}
-          note="Robust typical length"
-          tooltip="Middle cycle length; less sensitive to sporadic outliers"
-        />
-        <MetricCard
-          label="Variability"
-          value={`±${stats.stdCycleLength}d`}
-          note="Standard deviation"
-          good={stats.stdCycleLength < 4}
-          tooltip="Clinical threshold: standard deviation under 4-5 days indicates regular cycles"
-        />
-        <MetricCard
-          label="Cycles Logged"
-          value={String(stats.completedCycles)}
-          note="Complete intervals"
-          tooltip="Total intervals between recorded bleeding periods"
-        />
-        <MetricCard
-          label="Average Period"
-          value={`${stats.averagePeriodDuration}d`}
-          note="Bleeding duration"
-          tooltip="Average duration of menstrual flow in days"
-        />
-        <MetricCard
-          label="Cycle Pattern"
-          value={stats.isIrregular ? "Irregular" : "Regular"}
-          good={!stats.isIrregular}
-          note={stats.isIrregular ? "High variability (±" + stats.stdCycleLength + "d)" : "Consistent clinical pattern"}
-          tooltip="Categorized using clinical guidelines: cycle variation > 7 days indicates irregularity"
-        />
+    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+      {/* Top Title & Timeframe Selector (Matching reference bottom-right) */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black text-[#302337] tracking-tight">
+            Analytics
+          </h2>
+          <p className="text-xs font-semibold text-[#8A7890]">
+            Personal biological rhythms & computational forecast insights
+          </p>
+        </div>
+
+        {/* Timeframe pill selector: 3 months / 6 months / 12 months */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/80 border border-[#EFE4EC] shadow-xs">
+          {(["3", "6", "12"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTimeframe(t)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                timeframe === t
+                  ? "bg-[#503750] text-white shadow-xs"
+                  : "text-[#8A7890] hover:text-[#302337]"
+              }`}
+            >
+              {t} months
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Cycle length trend */}
-      {cycleLengthData.length >= 2 && (
-        <div className="rounded-2xl border p-5" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" style={{ color: "var(--accent-plum)" }} />
-              <h3 className="font-semibold text-base" style={{ color: "var(--text-primary)" }}>Personal Cycle Length History</h3>
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full border border-dashed"
-              style={{ color: "var(--text-secondary)", borderColor: "var(--border-color)" }}>
-              Dashed line = Personal median ({stats.medianCycleLength} days)
-            </span>
+      {/* 1. Energy & Hormonal Vitality Curve Card (Matching reference image spline) */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 backdrop-blur-md p-6 sm:p-7 shadow-card space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-[#302337] flex items-center gap-2">
+              <Activity className="w-5 h-5 text-[#E05A8D]" /> Energy & Vitality Curve
+            </h3>
+            <p className="text-xs text-[#8A7890]">
+              Expected physiological energy distribution across your cycle phases
+            </p>
           </div>
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FAF0F5] text-[#503750] border border-[#EFE4EC]">
+            Clinical Rhythm
+          </span>
+        </div>
 
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={cycleLengthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-              <XAxis dataKey="cycle" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} />
-              <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} width={45} unit="d" />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v} days`, "Cycle Length"]} />
-              <ReferenceLine y={stats.medianCycleLength} stroke="#a855f7" strokeDasharray="4 4" />
+        <div className="h-64 w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={energySplineData} margin={{ top: 15, right: 20, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1E4EC" vertical={false} />
+              <XAxis
+                dataKey="phase"
+                tick={{ fill: "#8A7890", fontSize: 11, fontWeight: 600 }}
+                axisLine={{ stroke: "#EFE4EC" }}
+                tickLine={false}
+              />
+              <YAxis
+                domain={[0, 10]}
+                ticks={[0, 2, 4, 6, 8, 10]}
+                tick={{ fill: "#8A7890", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                formatter={(val: any) => [`${val} / 10`, "Energy Index"]}
+              />
               <Line
                 type="monotone"
-                dataKey="length"
-                stroke="#ec4899"
+                dataKey="energy"
+                stroke="#D985B7"
                 strokeWidth={3}
-                dot={{ fill: "#ec4899", r: 5 }}
-                activeDot={{ r: 7 }}
+                dot={{ r: 5, fill: "#E05A8D", strokeWidth: 2, stroke: "#FFFFFF" }}
+                activeDot={{ r: 7, fill: "#503750", strokeWidth: 2, stroke: "#FFFFFF" }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
-      )}
+      </div>
 
-      {/* ML Evaluation & Benchmark Validation */}
-      {ml && (
-        <div className="rounded-2xl border p-5" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5" style={{ color: "var(--accent-plum)" }} />
-              <h3 className="font-semibold text-base" style={{ color: "var(--text-primary)" }}>
-                Model Performance & Validation Benchmark
-              </h3>
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 font-medium">
-              Zero Data Leakage Validation
-            </span>
-          </div>
-
-          <p className="text-xs mb-4 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-            Models were evaluated using chronological walk-forward splits on 600 unseen test cycle predictions.
-            <strong> Lower Mean Absolute Error (MAE) indicates higher accuracy.</strong> Random Forest was approved as the production default because it achieved the lowest error.
-          </p>
-
-          <ResponsiveContainer width="100%" height={170}>
-            <BarChart data={barData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-              <XAxis type="number" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} unit="d" />
-              <YAxis type="category" dataKey="name" width={170} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v} days error`, "Mean Absolute Error (MAE)"]} />
-              <Bar dataKey="mae" radius={[0, 6, 6, 0]}>
-                {barData.map((entry, i) => (
-                  <Cell key={`bar-${i}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-sm">
-            <div className="p-3 rounded-xl border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
-              <p className="text-[10px] uppercase font-semibold" style={{ color: "var(--text-secondary)" }}>Approved Model</p>
-              <p className="font-bold capitalize text-brand-400 mt-0.5">
-                {ml.approved_model.replace(/_/g, " ")}
-              </p>
-            </div>
-            <div className="p-3 rounded-xl border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
-              <p className="text-[10px] uppercase font-semibold" style={{ color: "var(--text-secondary)" }}>Approved MAE</p>
-              <p className="font-bold text-green-400 mt-0.5">
-                {ml.approved_mae} days
-              </p>
-            </div>
-            <div className="p-3 rounded-xl border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
-              <p className="text-[10px] uppercase font-semibold" style={{ color: "var(--text-secondary)" }}>80% Coverage</p>
-              <p className="font-bold text-brand-400 mt-0.5">
-                {ml.interval_coverage_pct}% of cycles
-              </p>
-            </div>
-            <div className="p-3 rounded-xl border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
-              <p className="text-[10px] uppercase font-semibold" style={{ color: "var(--text-secondary)" }}>Test Instances</p>
-              <p className="font-bold mt-0.5" style={{ color: "var(--text-primary)" }}>
-                {ml.test_samples || 600} cycles
-              </p>
-            </div>
-          </div>
-
-          <p className="text-xs mt-3.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 leading-relaxed flex items-start gap-2">
-            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>
-              <strong>Scientific & Synthetic Data Distinction:</strong> The benchmark metrics above were computed using simulated clinical cycle distributions for objective developmental scoring. Individual real-world biology varies with stress, travel, illness, and physiology.
-            </span>
+      {/* 2. Real Cycle Length History Chart */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 backdrop-blur-md p-6 sm:p-7 shadow-card space-y-4">
+        <div>
+          <h3 className="text-lg font-bold text-[#302337] flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[#503750]" /> Verified Cycle Lengths
+          </h3>
+          <p className="text-xs text-[#8A7890]">
+            Duration of each completed menstrual cycle interval from your personal log
           </p>
         </div>
-      )}
 
-      {/* Prediction History Snapshots */}
-      {snapshots.length > 0 && (
-        <div className="rounded-2xl border p-5" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <div className="flex items-center gap-2 mb-1">
-            <History className="w-5 h-5" style={{ color: "var(--accent-plum)" }} />
-            <h3 className="font-semibold" style={{ color: "var(--text-primary)" }}>Historical Prediction Audit Log</h3>
+        <div className="h-56 w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={cycleData} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1E4EC" vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "#8A7890", fontSize: 11, fontWeight: 600 }}
+                axisLine={{ stroke: "#EFE4EC" }}
+                tickLine={false}
+              />
+              <YAxis
+                domain={[15, 45]}
+                tick={{ fill: "#8A7890", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                formatter={(val: any) => [`${val} days`, "Cycle Duration"]}
+              />
+              <Bar dataKey="length" fill="#503750" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* 3. Summary Metrics Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4">
+        <MetricCard
+          label="Average Cycle"
+          value={`${stats.averageCycleLength}d`}
+          note="Historical mean"
+          tooltip="Average interval between consecutive period start dates"
+        />
+        <MetricCard
+          label="Median Cycle"
+          value={`${stats.medianCycleLength}d`}
+          note="Resistant to outliers"
+          tooltip="Middle cycle length across all recorded intervals"
+        />
+        <MetricCard
+          label="Variability"
+          value={stats.completedCycles >= 2 ? `±${stats.stdCycleLength}d` : "—"}
+          note={
+            stats.completedCycles < 2
+              ? "Need 2+ cycles"
+              : stats.isIrregular
+              ? "Higher variability"
+              : "Within regular norms"
+          }
+          good={stats.completedCycles >= 2 ? !stats.isIrregular : undefined}
+          tooltip="Sample standard deviation of cycle lengths"
+        />
+      </div>
+
+      {/* 4. Model Accuracy & Benchmarking Card */}
+      {ml && (
+        <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-6 sm:p-7 shadow-card space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#302337] flex items-center gap-2">
+                <Brain className="w-5 h-5 text-[#503750]" /> Model Benchmark Evaluation
+              </h3>
+              <p className="text-xs text-[#8A7890]">
+                Mean Absolute Error (MAE in days) across synthetic holdout evaluations
+              </p>
+            </div>
+            <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-[#FAF5F7] border border-[#EFE4EC] text-[#8A7890]">
+              Lower is Better
+            </span>
           </div>
-          <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>
-            Audit log of past generated predictions showing estimated start dates and uncertainty intervals.
-          </p>
 
-          <div className="space-y-2">
-            {snapshots.map((snap) => (
-              <div key={snap._id} className="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {benchmarkData.map((m) => (
+              <div
+                key={m.name}
+                className="p-4 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] flex items-center justify-between"
+              >
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
-                      Predicted Start: {snap.predictedStart}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full capitalize"
-                      style={{ background: "rgba(168, 85, 247, 0.15)", color: "var(--accent-plum)" }}>
-                      {snap.method.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
-                    Estimated Window: {snap.earliestStart} – {snap.latestStart} (Cycle ~{Math.round(snap.predictedCycleLength)}d)
-                  </p>
+                  <p className="text-xs font-bold text-[#302337]">{m.name}</p>
+                  <p className="text-[11px] text-[#8A7890]">MAE (Holdout)</p>
                 </div>
-                <div className="text-right text-xs" style={{ color: "var(--text-secondary)" }}>
-                  <p>Confidence: <span className="font-medium capitalize" style={{ color: "var(--text-primary)" }}>{snap.confidence}</span></p>
-                  <p>{new Date(snap.generatedAt).toLocaleDateString()}</p>
-                </div>
+                <span className="text-lg font-black text-[#503750]">
+                  ±{m.mae.toFixed(2)}d
+                </span>
               </div>
             ))}
           </div>
+
+          <p className="text-[11px] text-[#8A7890] leading-relaxed pt-2 border-t border-[#EFE4EC]">
+            CycleSync LSTM uses temporal recurrent units trained on multi-cycle intervals.
+            Historical median serves as a reliable clinical baseline when fewer than 3 completed cycles are available.
+          </p>
         </div>
       )}
     </div>

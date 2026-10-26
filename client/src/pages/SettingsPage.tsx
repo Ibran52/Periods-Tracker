@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../features/auth/AuthContext";
 import { useTheme } from "../features/settings/ThemeContext";
 import { settingsApi, authApi, notificationsApi } from "../services/api";
 import type { CycleSettings } from "../types";
-import { Sun, Moon, Monitor, Trash2, Download, KeyRound, Loader2, CheckCircle2, Bell, BellRing, Brain, Sparkles, Cpu, Activity } from "lucide-react";
+import {
+  Sun, Moon, Monitor, Trash2, KeyRound, Loader2, CheckCircle2,
+  Bell, BellRing, Brain
+} from "lucide-react";
 
 function ThemePicker() {
   const { theme, setTheme } = useTheme();
@@ -15,9 +18,16 @@ function ThemePicker() {
   return (
     <div className="flex gap-2">
       {options.map(({ key, label, icon }) => (
-        <button key={key} onClick={() => setTheme(key)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition-all ${theme === key ? "bg-brand-600 text-white border-brand-600" : ""}`}
-          style={theme !== key ? { background: "var(--bg-surface)", borderColor: "var(--border-color)", color: "var(--text-secondary)" } : {}}>
+        <button
+          key={key}
+          type="button"
+          onClick={() => setTheme(key)}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${
+            theme === key
+              ? "bg-[#503750] text-white border-[#503750] shadow-sm"
+              : "bg-[#FAF5F7] border-[#EFE4EC] text-[#8A7890] hover:bg-[#FAF0F5]"
+          }`}
+        >
           {icon} {label}
         </button>
       ))}
@@ -39,7 +49,6 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [pushMsg, setPushMsg] = useState("");
 
@@ -100,264 +109,314 @@ export function SettingsPage() {
     }
   };
 
-  const sendTestNotification = async () => {
-    setPushMsg("");
-    try {
-      const res = await notificationsApi.sendTest();
-      setPushMsg(res.message);
-    } catch (err: any) {
-      setPushMsg(err.message || "Failed to trigger test push");
-    }
-  };
-
-  const saveSettings = async () => {
+  const handleSave = async () => {
     setSaving(true);
+    setSaved(false);
     try {
       await settingsApi.update({
         defaultCycleLength: cycleLen,
         defaultPeriodDuration: periodDur,
-        reminderDaysBefore: reminderDays,
         remindersEnabled,
+        reminderDaysBefore: reminderDays,
         modelPreference: modelPref
       });
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), 3000);
     } finally {
       setSaving(false);
     }
   };
 
-  const changePassword = async () => {
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
     setPwMsg("");
     try {
       await authApi.changePassword({ currentPassword: currentPw, newPassword: newPw });
       setPwMsg("Password updated successfully");
-      setCurrentPw(""); setNewPw("");
-    } catch (e: any) {
-      setPwMsg(e.message || "Failed to update password");
+      setCurrentPw("");
+      setNewPw("");
+    } catch (err: any) {
+      setPwMsg(err.message || "Failed to update password");
     }
   };
 
-  const exportData = async () => {
-    setExporting(true);
-    try {
-      const data = await settingsApi.export();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "veyora-export.json"; a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const deleteAccount = async () => {
-    if (!confirm("Permanently delete your account and all health data? This cannot be undone.")) return;
-    if (!confirm("Are you absolutely sure? All period history, symptoms, and predictions will be erased.")) return;
+  const handleDeleteAccount = async () => {
+    if (!confirm("Are you sure? This will delete all your data permanently.")) return;
     setDeleting(true);
     try {
       await settingsApi.deleteAccount();
-      await logout();
-    } finally {
+      logout();
+    } catch {
       setDeleting(false);
     }
   };
 
-  const labelCls = "block text-sm font-medium mb-1.5";
-  const inputCls = "w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all";
-  const inputStyle = { background: "var(--bg-surface)", borderColor: "var(--border-color)", color: "var(--text-primary)" };
-  const sectionCls = "rounded-2xl border p-5 space-y-4";
-
   return (
-    <div className="space-y-5 pb-10">
-      <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Settings</h2>
+    <div className="space-y-6 max-w-2xl mx-auto pb-10">
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-black text-[#302337] tracking-tight">
+          Settings
+        </h2>
+        <p className="text-xs font-semibold text-[#8A7890]">
+          Personalize your cycle parameters, notifications, and AI forecasting engine
+        </p>
+      </div>
 
-      {/* Appearance */}
-      <div className={sectionCls} style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-        <h3 className="font-semibold text-sm uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Appearance</h3>
+      {/* 1. Appearance / Theme */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-6 shadow-card space-y-3">
+        <h3 className="text-sm font-bold text-[#302337]">Appearance</h3>
         <ThemePicker />
       </div>
 
-      {/* Cycle defaults */}
-      <div className={sectionCls} style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-        <h3 className="font-semibold text-sm uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Cycle Defaults</h3>
+      {/* 2. Cycle Defaults */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-6 shadow-card space-y-4">
+        <h3 className="text-sm font-bold text-[#302337]">Cycle & Period Defaults</h3>
+        <p className="text-xs text-[#8A7890]">
+          These baselines guide initial predictions until your personal history is established.
+        </p>
 
-        <div>
-          <label className={labelCls} style={{ color: "var(--text-primary)" }}>
-            Typical cycle length <span style={{ color: "var(--text-secondary)" }}>({cycleLen} days)</span>
-          </label>
-          <input type="range" min={15} max={60} value={cycleLen} onChange={(e) => setCycleLen(Number(e.target.value))}
-            className="w-full accent-brand-500" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1.5">
+              Default Cycle Length (days)
+            </label>
+            <input
+              type="number"
+              min={21}
+              max={45}
+              value={cycleLen}
+              onChange={(e) => setCycleLen(Number(e.target.value))}
+              className="w-full px-4 py-2.5 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm font-semibold text-[#302337] outline-none focus:border-[#503750]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1.5">
+              Default Period Bleeding (days)
+            </label>
+            <input
+              type="number"
+              min={2}
+              max={10}
+              value={periodDur}
+              onChange={(e) => setPeriodDur(Number(e.target.value))}
+              className="w-full px-4 py-2.5 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm font-semibold text-[#302337] outline-none focus:border-[#503750]"
+            />
+          </div>
         </div>
+      </div>
 
-        <div>
-          <label className={labelCls} style={{ color: "var(--text-primary)" }}>
-            Typical period duration <span style={{ color: "var(--text-secondary)" }}>({periodDur} days)</span>
-          </label>
-          <input type="range" min={1} max={15} value={periodDur} onChange={(e) => setPeriodDur(Number(e.target.value))}
-            className="w-full accent-brand-500" />
-        </div>
-
-        <div>
-          <label className={labelCls} style={{ color: "var(--text-primary)" }}>
-            Remind me <span style={{ color: "var(--text-secondary)" }}>{reminderDays} days before</span>
-          </label>
-          <input type="range" min={0} max={7} value={reminderDays} onChange={(e) => setReminderDays(Number(e.target.value))}
-            className="w-full accent-brand-500" />
-        </div>
-
+      {/* 3. AI / ML Model Engine Selection */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-6 shadow-card space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Enable reminders</label>
-          <button onClick={() => setRemindersEnabled((v) => !v)}
-            className={`w-10 h-6 rounded-full transition-all relative ${remindersEnabled ? "bg-brand-600" : "bg-gray-600"}`}>
-            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${remindersEnabled ? "left-5" : "left-1"}`} />
-          </button>
+          <div>
+            <h3 className="text-sm font-bold text-[#302337] flex items-center gap-2">
+              <Brain className="w-4 h-4 text-[#503750]" /> AI Model Engine
+            </h3>
+            <p className="text-xs text-[#8A7890]">
+              Choose how Veyora computes cycle lengths and fertility windows
+            </p>
+          </div>
         </div>
 
-        <div className="pt-3 border-t space-y-3" style={{ borderColor: "var(--border-color)" }}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Device Push Notifications</p>
-              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Receive alerts on your device ahead of your cycle</p>
-            </div>
-            <button onClick={enableWebPush} disabled={pushLoading}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand-500 text-brand-400 hover:bg-brand-500/10 transition-all">
-              {pushLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bell className="w-3.5 h-3.5" />}
-              Opt-in
-            </button>
-          </div>
-
-          {pushMsg && (
-            <p className="text-xs p-2.5 rounded-lg bg-brand-500/10 text-brand-300 border border-brand-500/20">{pushMsg}</p>
-          )}
-
-          {remindersEnabled && (
-            <button onClick={sendTestNotification}
-              className="text-xs flex items-center gap-1.5 text-brand-400 hover:underline">
-              <BellRing className="w-3.5 h-3.5" /> Send test push notification
-            </button>
-          )}
-        </div>
-
-        {/* ML Prediction Engine */}
-        <div className="pt-3 border-t space-y-3" style={{ borderColor: "var(--border-color)" }}>
-          <div className="flex items-center gap-2">
-            <Brain className="w-4 h-4" style={{ color: "var(--accent-plum)" }} />
-            <h4 className="font-semibold text-xs uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>
-              ML Forecasting Engine
-            </h4>
-          </div>
-          <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Choose the model used for next-period forecasting. Automated walk-forward validation selected Random Forest as the approved production default.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {[
-              {
-                id: "auto",
-                title: "Auto (Recommended)",
-                badge: "Approved Default",
-                badgeColor: "bg-green-500/10 text-green-400 border-green-500/20",
-                desc: "Automatically selects the best-performing model (Random Forest, MAE 1.75d). Gracefully falls back to baseline when <4 cycles are recorded."
-              },
-              {
-                id: "random_forest",
-                title: "Random Forest Regressor",
-                badge: "MAE 1.75d",
-                badgeColor: "bg-brand-500/10 text-brand-400 border-brand-500/20",
-                desc: "Calibrated ensemble model using historical cycle length, variance, and rolling means with 80% coverage intervals."
-              },
-              {
-                id: "cycle_sync",
-                title: "CycleSync LSTM",
-                badge: "Experimental (MAE 2.73d)",
-                badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                desc: "Deep recurrent LSTM network trained on sequential cycle length and duration pairs. Experimental candidate."
-              },
-              {
-                id: "baseline",
-                title: "Historical Median",
-                badge: "Rule-Based",
-                badgeColor: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-                desc: "Transparent rolling median without machine learning. Deterministic and explainable."
-              }
-            ].map((opt) => (
-              <button
+        <div className="space-y-2.5">
+          {[
+            {
+              id: "auto",
+              label: "Auto (Recommended)",
+              badge: "Smart Switching",
+              desc: "Automatically selects the best model based on your history length (CycleSync LSTM at 3+ cycles)."
+            },
+            {
+              id: "cycle_sync",
+              label: "CycleSync LSTM",
+              badge: "Neural Network",
+              desc: "Deep recurrent LSTM model analyzing sequential cycle-to-cycle temporal patterns (requires 3+ cycles)."
+            },
+            {
+              id: "random_forest",
+              label: "Random Forest Regressor",
+              badge: "Tree Ensemble",
+              desc: "Robust non-linear ensemble trained on clinical cycle features (requires 4+ cycles)."
+            },
+            {
+              id: "baseline",
+              label: "Historical Median (Baseline)",
+              badge: "Deterministic",
+              desc: "Pure rule-based statistical median, completely resistant to complex model variance."
+            }
+          ].map((opt) => {
+            const isSelected = modelPref === opt.id;
+            return (
+              <div
                 key={opt.id}
-                type="button"
                 onClick={() => setModelPref(opt.id as any)}
-                className={`p-3.5 rounded-xl border text-left transition-all ${
-                  modelPref === opt.id
-                    ? "border-brand-500 ring-2 ring-brand-500/30 bg-brand-500/5"
-                    : "hover:border-opacity-80"
+                className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-[#FAF2F7] border-[#503750] shadow-xs"
+                    : "bg-[#FAF5F7]/50 border-[#EFE4EC] hover:bg-[#FAF0F5]"
                 }`}
-                style={{
-                  background: modelPref === opt.id ? undefined : "var(--bg-surface)",
-                  borderColor: modelPref === opt.id ? undefined : "var(--border-color)"
-                }}
               >
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
-                    {opt.title}
-                  </span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${opt.badgeColor}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      isSelected ? "border-[#503750] bg-[#503750]" : "border-[#8A7890]"
+                    }`}>
+                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <span className="text-sm font-bold text-[#302337]">{opt.label}</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white border border-[#EFE4EC] text-[#8A7890]">
                     {opt.badge}
                   </span>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-xs text-[#8A7890] pl-6 leading-relaxed">
                   {opt.desc}
                 </p>
-              </button>
-            ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Notifications & Reminders */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-6 shadow-card space-y-4">
+        <h3 className="text-sm font-bold text-[#302337] flex items-center gap-2">
+          <Bell className="w-4 h-4 text-[#503750]" /> Period Reminders
+        </h3>
+
+        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FAF5F7] border border-[#EFE4EC]">
+          <div>
+            <p className="text-xs font-bold text-[#302337]">Enable Upcoming Period Alerts</p>
+            <p className="text-[11px] text-[#8A7890]">Receive gentle notifications prior to expected cycle start</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setRemindersEnabled(!remindersEnabled)}
+            className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
+              remindersEnabled ? "bg-[#503750]" : "bg-[#EFE4EC]"
+            }`}
+          >
+            <div
+              className={`w-5 h-5 rounded-full bg-white shadow-xs transition-transform transform absolute top-0.5 ${
+                remindersEnabled ? "translate-x-6.5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
         </div>
 
-        <button onClick={saveSettings} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 transition-all">
-          {saved ? <><CheckCircle2 className="w-4 h-4" /> Saved!</> : saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : "Save settings"}
+        {remindersEnabled && (
+          <div className="space-y-3 pt-1">
+            <div>
+              <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1.5">
+                Notify me in advance
+              </label>
+              <select
+                value={reminderDays}
+                onChange={(e) => setReminderDays(Number(e.target.value))}
+                className="w-full px-4 py-2.5 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm font-semibold text-[#302337] outline-none"
+              >
+                <option value={1}>1 day before</option>
+                <option value={2}>2 days before</option>
+                <option value={3}>3 days before</option>
+                <option value={5}>5 days before</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={enableWebPush}
+              disabled={pushLoading}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-[#FAF0F5] text-[#503750] border border-[#EFE4EC] hover:bg-[#F2E5EF] transition-all cursor-pointer"
+            >
+              <BellRing className="w-3.5 h-3.5" />
+              {pushLoading ? "Subscribing…" : "Enable Device Web Push"}
+            </button>
+            {pushMsg && <p className="text-xs text-[#503750] font-medium">{pushMsg}</p>}
+          </div>
+        )}
+      </div>
+
+      {/* Save Settings Action Button */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 py-3.5 px-6 rounded-full font-semibold text-sm text-white bg-[#503750] hover:bg-[#3E293E] shadow-plum transition-all cursor-pointer flex items-center justify-center gap-2"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> Saving…
+            </>
+          ) : saved ? (
+            <>
+              <CheckCircle2 className="w-4 h-4 text-emerald-300" /> Settings Saved!
+            </>
+          ) : (
+            "Save Preferences"
+          )}
         </button>
       </div>
 
-      {/* Password */}
-      <div className={sectionCls} style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-        <h3 className="font-semibold text-sm uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Change Password</h3>
-        <div>
-          <label className={labelCls} style={{ color: "var(--text-primary)" }}>Current password</label>
-          <input id="settings-current-pw" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)}
-            className={inputCls} style={inputStyle} placeholder="••••••••" />
-        </div>
-        <div>
-          <label className={labelCls} style={{ color: "var(--text-primary)" }}>New password</label>
-          <input id="settings-new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
-            className={inputCls} style={inputStyle} placeholder="Min. 8 characters" />
-        </div>
-        {pwMsg && <p className={`text-sm ${pwMsg.includes("success") ? "text-green-400" : "text-red-400"}`}>{pwMsg}</p>}
-        <button onClick={changePassword}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-all">
-          <KeyRound className="w-4 h-4" /> Update password
-        </button>
+      {/* 5. Security & Change Password */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-6 shadow-card space-y-4">
+        <h3 className="text-sm font-bold text-[#302337] flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-[#503750]" /> Security & Password
+        </h3>
+
+        <form onSubmit={handleChangePassword} className="space-y-3">
+          <div>
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1">
+              Current Password
+            </label>
+            <input
+              type="password"
+              value={currentPw}
+              onChange={(e) => setCurrentPw(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm outline-none focus:border-[#503750]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1">
+              New Password
+            </label>
+            <input
+              type="password"
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+              required
+              minLength={8}
+              className="w-full px-4 py-2 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm outline-none focus:border-[#503750]"
+            />
+          </div>
+
+          {pwMsg && <p className="text-xs text-[#503750] font-semibold">{pwMsg}</p>}
+
+          <button
+            type="submit"
+            className="px-5 py-2.5 rounded-full text-xs font-bold text-white bg-[#503750] hover:bg-[#3E293E] shadow-xs cursor-pointer"
+          >
+            Update Password
+          </button>
+        </form>
       </div>
 
-      {/* Data */}
-      <div className={sectionCls} style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-        <h3 className="font-semibold text-sm uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Privacy & Data</h3>
-        <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-          You own your health data. Export a full copy or delete your account at any time.
-          Veyora is not a medical device.
+      {/* 6. Danger Zone */}
+      <div className="rounded-3xl border border-rose-200 bg-rose-50/50 p-6 shadow-card space-y-3">
+        <h3 className="text-sm font-bold text-rose-700 flex items-center gap-2">
+          <Trash2 className="w-4 h-4" /> Danger Zone
+        </h3>
+        <p className="text-xs text-rose-600/80">
+          Permanently delete your account and all associated period logs, predictions, and journal entries.
         </p>
-
-        <button onClick={exportData} disabled={exporting}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all"
-          style={{ borderColor: "var(--border-color)", color: "var(--text-primary)", background: "var(--bg-surface)" }}>
-          {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-          Export my data (JSON)
-        </button>
-
-        <button onClick={deleteAccount} disabled={deleting}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-red-300 border border-red-400/30 bg-red-400/10 hover:bg-red-400/20 disabled:opacity-50 transition-all">
-          {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-          Delete account & all data
+        <button
+          onClick={handleDeleteAccount}
+          disabled={deleting}
+          className="px-5 py-2.5 rounded-full text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs cursor-pointer"
+        >
+          {deleting ? "Deleting…" : "Delete Account"}
         </button>
       </div>
     </div>

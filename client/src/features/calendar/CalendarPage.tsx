@@ -1,14 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { periodsApi, predictionsApi, journalApi } from "../../services/api";
 import type { PeriodLog, PredictionData, SymptomLog } from "../../types";
 import {
-  ChevronLeft, ChevronRight, Plus, Pencil, Trash2, X, Loader2,
-  Calendar, Droplets, Heart, Sparkles
+  ChevronLeft, ChevronRight, Plus, Pencil, Trash2, X,
+  Heart
 } from "lucide-react";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
-const FLOW_COLORS: Record<string, string> = { light: "#f9a8d4", medium: "#ec4899", heavy: "#be185d" };
 
 function isoDate(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -60,61 +59,83 @@ function PeriodForm({ initial, onSave, onClose }: PeriodFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border p-6 shadow-xl"
-        style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-md rounded-3xl border border-[#EFE4EC] bg-white p-6 sm:p-7 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
-            {initial?._id ? "Edit period" : "Log period"}
+          <h3 className="font-bold text-lg text-[#302337]">
+            {initial?._id ? "Edit period log" : "Log period"}
           </h3>
-          <button onClick={onClose} className="opacity-50 hover:opacity-80">
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-[#8A7890] hover:bg-[#FAF0F5]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Start date *</label>
-            <input type="date" value={startDate} onChange={(e) => setStart(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-brand-500"
-              style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)", color: "var(--text-primary)" }} />
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1.5">Start date *</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStart(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm text-[#302337] outline-none focus:border-[#503750]"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>
-              End date <span style={{ color: "var(--text-secondary)" }}>(leave blank if ongoing)</span>
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1.5">
+              End date <span className="normal-case font-normal">(leave blank if ongoing)</span>
             </label>
-            <input type="date" value={endDate} onChange={(e) => setEnd(e.target.value)} min={startDate}
-              className="w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-brand-500"
-              style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)", color: "var(--text-primary)" }} />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEnd(e.target.value)}
+              min={startDate}
+              className="w-full px-4 py-2.5 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm text-[#302337] outline-none focus:border-[#503750]"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Flow intensity</label>
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1.5">Flow intensity</label>
             <div className="flex gap-2">
-              {["light", "medium", "heavy"].map((f) => (
-                <button key={f} onClick={() => setFlow(flow === f ? "" : f)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-medium capitalize border transition-all ${flow === f ? "bg-brand-600 text-white border-brand-600" : "border-opacity-50"}`}
-                  style={flow !== f ? { background: "var(--bg-surface)", borderColor: "var(--border-color)", color: "var(--text-secondary)" } : {}}>
-                  {f}
-                </button>
-              ))}
+              {["light", "medium", "heavy"].map((f) => {
+                const isSelected = flow === f;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFlow(isSelected ? "" : f)}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold capitalize border transition-all ${
+                      isSelected
+                        ? "bg-[#503750] text-white border-[#503750] shadow-sm"
+                        : "bg-[#FAF5F7] border-[#EFE4EC] text-[#8A7890] hover:bg-[#FAF0F5]"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-              className="w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-              style={{ background: "var(--bg-surface)", borderColor: "var(--border-color)", color: "var(--text-primary)" }}
-              placeholder="Optional notes…" />
+            <label className="block text-xs font-bold text-[#8A7890] uppercase tracking-wider mb-1.5">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="w-full px-4 py-2.5 rounded-2xl border border-[#EFE4EC] bg-[#FAF5F7] text-sm text-[#302337] outline-none focus:border-[#503750] resize-none"
+              placeholder="Optional personal notes…"
+            />
           </div>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-xs text-rose-600 font-semibold">{error}</p>}
 
-          <button onClick={submit} disabled={loading}
-            className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 transition-all">
-            {loading ? "Saving…" : "Save"}
+          <button
+            onClick={submit}
+            disabled={loading}
+            className="w-full py-3.5 px-6 rounded-full font-semibold text-sm text-white bg-[#503750] hover:bg-[#3E293E] shadow-plum disabled:opacity-50 transition-all cursor-pointer"
+          >
+            {loading ? "Saving…" : "Save Period Record"}
           </button>
         </div>
       </div>
@@ -168,16 +189,10 @@ export function CalendarPage() {
     }
   }
 
-  // Build prediction overlay sets
-  const predictedDates = prediction?.predictedStart
-    ? new Set([prediction.predictedStart])
-    : new Set<string>();
-
   const forecastWindow = (prediction?.earliestStart && prediction?.latestStart)
     ? dateRange(prediction.earliestStart, prediction.latestStart)
     : new Set<string>();
 
-  // Predicted period duration: use avg period duration from stats, default 5
   const avgDuration = prediction?.stats?.averagePeriodDuration || 5;
   const predPeriodDates: Set<string> = new Set();
   if (prediction?.predictedStart) {
@@ -220,50 +235,63 @@ export function CalendarPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--accent-plum)" }} />
+      <div className="flex flex-col items-center justify-center h-80 gap-3">
+        <div className="w-10 h-10 rounded-full border-3 border-[#503750]/20 border-t-[#503750] animate-spin" />
+        <p className="text-xs font-semibold text-[#8A7890]">Loading your calendar…</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button onClick={prevMonth} className="p-2 rounded-xl hover:opacity-70 transition-opacity"
-            style={{ background: "var(--bg-card)", color: "var(--text-primary)" }}>
+    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+      {/* Month Navigation & Action Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={prevMonth}
+            className="w-10 h-10 rounded-2xl border border-[#EFE4EC] bg-white/90 text-[#302337] flex items-center justify-center hover:bg-[#FAF0F5] transition-colors shadow-xs"
+          >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-lg font-semibold w-44 text-center" style={{ color: "var(--text-primary)" }}>
+          <h2 className="text-xl sm:text-2xl font-black text-[#302337] min-w-[170px] text-center tracking-tight">
             {MONTHS[month]} {year}
           </h2>
-          <button onClick={nextMonth} className="p-2 rounded-xl hover:opacity-70 transition-opacity"
-            style={{ background: "var(--bg-card)", color: "var(--text-primary)" }}>
+          <button
+            onClick={nextMonth}
+            className="w-10 h-10 rounded-2xl border border-[#EFE4EC] bg-white/90 text-[#302337] flex items-center justify-center hover:bg-[#FAF0F5] transition-colors shadow-xs"
+          >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-        <button onClick={() => { setEditing(null); setShowForm(true); }}
+
+        <button
+          onClick={() => { setEditing(null); setShowForm(true); }}
           id="add-period-btn"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-all">
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white bg-[#503750] hover:bg-[#3E293E] shadow-plum transition-all cursor-pointer"
+        >
           <Plus className="w-4 h-4" />
-          Log period
+          Log Period
         </button>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="rounded-2xl border overflow-hidden"
-        style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-        <div className="grid grid-cols-7 border-b" style={{ borderColor: "var(--border-color)" }}>
+      {/* Calendar Grid Card */}
+      <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 backdrop-blur-md p-5 sm:p-7 shadow-card">
+        {/* Day-of-week header */}
+        <div className="grid grid-cols-7 mb-3 border-b border-[#EFE4EC] pb-2">
           {DAYS.map((d) => (
-            <div key={d} className="text-center py-3 text-xs font-semibold uppercase tracking-wider"
-              style={{ color: "var(--text-secondary)" }}>{d}</div>
+            <div
+              key={d}
+              className="text-center text-xs font-bold uppercase tracking-wider text-[#8A7890]"
+            >
+              {d}
+            </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7">
+        {/* Date cells grid */}
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
           {cells.map((day, i) => {
-            if (!day) return <div key={`e${i}`} className="p-1 h-14 sm:h-12" />;
+            if (!day) return <div key={`empty-${i}`} className="h-12 sm:h-14" />;
             const iso = isoDate(year, month, day);
             const isPeriod = periodDates.has(iso);
             const isToday = iso === todayIso;
@@ -273,45 +301,40 @@ export function CalendarPage() {
             const isFertile = fertileWindow.has(iso) && !isPeriod && !isForecast;
             const hasJournal = journalDates.has(iso);
 
-            let bg = "transparent";
-            let textColor = isToday ? "var(--accent-plum)" : "var(--text-primary)";
-            let fontWeight = isToday ? "700" : "400";
-
+            let bgClass = "bg-[#FAF5F7]/40 hover:bg-[#FAF0F5] text-[#302337]";
             if (isPeriod) {
-              bg = FLOW_COLORS[periodDates.get(iso)?.flowIntensity ?? ""] || "#ec4899";
-              textColor = "white";
-              fontWeight = "600";
+              bgClass = "bg-[#E05A8D] text-white font-bold shadow-xs";
             } else if (isPredPeriod) {
-              bg = "rgba(236, 72, 153, 0.18)";
-              textColor = "#f472b6";
+              bgClass = "bg-[#FDEEF4] text-[#E05A8D] font-bold border border-dashed border-[#E05A8D]/50";
             } else if (isForecast) {
-              bg = "rgba(168, 85, 247, 0.12)";
-              textColor = "var(--accent-plum)";
+              bgClass = "bg-[#F3EBF4] text-[#503750] font-semibold";
             } else if (isFertile) {
-              bg = "rgba(34, 197, 94, 0.1)";
-              textColor = "#4ade80";
+              bgClass = "bg-[#F0FAF5] text-[#2A7552] font-semibold border border-[#D5EFE2]";
             }
 
             return (
-              <button key={iso} onClick={() => setSelected(isSelected ? null : iso)}
-                className="relative h-14 sm:h-12 flex flex-col items-center justify-center text-sm transition-all hover:opacity-80"
-                style={{
-                  background: bg,
-                  color: textColor,
-                  fontWeight,
-                  outline: isSelected ? "2px solid var(--accent-plum)" : "none",
-                  outlineOffset: "-2px",
-                  borderRadius: "8px",
-                }}>
+              <button
+                key={iso}
+                type="button"
+                onClick={() => setSelected(isSelected ? null : iso)}
+                className={`relative h-12 sm:h-14 rounded-2xl flex flex-col items-center justify-center text-xs sm:text-sm transition-all cursor-pointer ${bgClass} ${
+                  isSelected ? "ring-2 ring-[#503750] ring-offset-1" : ""
+                } ${isToday && !isPeriod ? "border-2 border-[#503750] font-black" : ""}`}
+              >
                 <span>{day}</span>
+
                 {/* Journal dot indicator */}
-                {hasJournal && !isPeriod && (
-                  <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full"
-                    style={{ background: "var(--accent-plum)", opacity: 0.7 }} />
+                {hasJournal && (
+                  <span
+                    className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
+                      isPeriod ? "bg-white" : "bg-[#503750]"
+                    }`}
+                  />
                 )}
+
                 {/* Predicted period star */}
                 {isPredPeriod && !isPeriod && (
-                  <span className="absolute top-0.5 right-1 text-[8px] opacity-60">✦</span>
+                  <span className="absolute top-1 right-1 text-[8px] text-[#E05A8D]">✦</span>
                 )}
               </button>
             );
@@ -319,108 +342,89 @@ export function CalendarPage() {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" style={{ color: "var(--text-secondary)" }}>
+      {/* Calendar Legend */}
+      <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs text-[#8A7890] px-2 font-medium">
         <div className="flex items-center gap-1.5">
-          <Droplets className="w-3 h-3 text-pink-400" /> Logged period
+          <span className="w-3 h-3 rounded-full bg-[#E05A8D]" /> Logged Period
         </div>
         {prediction?.predictedStart && (
           <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3" style={{ color: "var(--accent-plum)" }} />
-            Predicted next period
+            <span className="w-3 h-3 rounded-full bg-[#FDEEF4] border border-dashed border-[#E05A8D]" /> Predicted Period
           </div>
         )}
         {prediction?.earliestStart && (
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(168, 85, 247, 0.25)" }} />
-            Forecast window (80%)
+            <span className="w-3 h-3 rounded-full bg-[#F3EBF4]" /> 80% Forecast Window
           </div>
         )}
         {prediction?.fertileWindow && (
           <div className="flex items-center gap-1.5">
-            <Heart className="w-3 h-3 text-green-400" /> Est. fertile window
+            <Heart className="w-3.5 h-3.5 text-[#2A7552]" /> Fertile Window
           </div>
         )}
         <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent-plum)" }} />
-          Journal entry
+          <span className="w-2 h-2 rounded-full bg-[#503750]" /> Journal Entry
         </div>
       </div>
 
-      {/* Prediction info banner */}
-      {prediction?.hasHistory && prediction.predictedStart && (
-        <div className="p-3 rounded-xl border flex items-center gap-2.5 text-sm"
-          style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <Calendar className="w-4 h-4 shrink-0" style={{ color: "var(--accent-plum)" }} />
-          <span style={{ color: "var(--text-secondary)" }}>
-            Next period predicted around{" "}
-            <strong style={{ color: "var(--text-primary)" }}>
-              {new Date(prediction.predictedStart + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-            </strong>
-            {prediction.uncertaintyDays && (
-              <span> (±{prediction.uncertaintyDays}d window shaded on calendar)</span>
-            )}
-          </span>
-        </div>
-      )}
+      {/* Selected Day Details Panel */}
+      {selected && (
+        <div className="rounded-3xl border border-[#EFE4EC] bg-white/90 p-5 sm:p-6 shadow-card space-y-3 animate-fadeIn">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-[#302337]">
+              {new Date(selected + "T00:00:00").toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric"
+              })}
+            </h4>
 
-      {/* Selected Day Detail */}
-      {selected && selectedPeriod && (
-        <div className="rounded-2xl border p-4" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold" style={{ color: "var(--text-primary)" }}>
-              {new Date(selected + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-            </h3>
-            <div className="flex gap-2">
-              <button onClick={() => { setEditing(selectedPeriod); setShowForm(true); }}
-                className="p-2 rounded-xl hover:opacity-70"
-                style={{ background: "var(--bg-surface)", color: "var(--text-primary)" }}>
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button onClick={() => deletePeriod(selectedPeriod._id)}
-                className="p-2 rounded-xl hover:opacity-70"
-                style={{ background: "var(--bg-surface)", color: "#f87171" }}>
-                <Trash2 className="w-4 h-4" />
-              </button>
+            {selectedPeriod && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setEditing(selectedPeriod); setShowForm(true); }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[#8A7890] hover:text-[#503750] hover:bg-[#FAF0F5] transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => deletePeriod(selectedPeriod._id)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-50 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {selectedPeriod ? (
+            <div className="space-y-1.5 text-xs text-[#8A7890]">
+              <p>Period Start: <strong className="text-[#302337]">{selectedPeriod.startDate}</strong></p>
+              {selectedPeriod.endDate && <p>Period End: <strong className="text-[#302337]">{selectedPeriod.endDate}</strong></p>}
+              {selectedPeriod.flowIntensity && (
+                <p>Flow Intensity: <strong className="capitalize text-[#302337]">{selectedPeriod.flowIntensity}</strong></p>
+              )}
+              {selectedPeriod.notes && <p>Notes: <em className="text-[#302337]">{selectedPeriod.notes}</em></p>}
             </div>
-          </div>
-          <div className="space-y-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-            <p>Start: <strong style={{ color: "var(--text-primary)" }}>{selectedPeriod.startDate}</strong></p>
-            {selectedPeriod.endDate && <p>End: <strong style={{ color: "var(--text-primary)" }}>{selectedPeriod.endDate}</strong></p>}
-            {selectedPeriod.flowIntensity && <p>Flow: <strong className="capitalize" style={{ color: "var(--text-primary)" }}>{selectedPeriod.flowIntensity}</strong></p>}
-            {selectedPeriod.notes && <p>Notes: <em style={{ color: "var(--text-primary)" }}>{selectedPeriod.notes}</em></p>}
-          </div>
+          ) : (
+            <div className="text-xs text-[#8A7890] space-y-1">
+              <p>No logged period on this date.</p>
+              {predPeriodDates.has(selected) && (
+                <p className="text-[#E05A8D] font-semibold">✦ Predicted period day</p>
+              )}
+              {forecastWindow.has(selected) && (
+                <p className="text-[#503750]">Within 80% forecast interval window (±{prediction?.uncertaintyDays || 3}d)</p>
+              )}
+              {fertileWindow.has(selected) && (
+                <p className="text-[#2A7552] font-semibold">Estimated fertile window (statistical estimate only)</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Selected forecast day info */}
-      {selected && !selectedPeriod && prediction?.hasHistory && (
-        forecastWindow.has(selected) || predPeriodDates.has(selected) || fertileWindow.has(selected)
-      ) && (
-        <div className="rounded-2xl border p-4 text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border-color)" }}>
-          <p className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-            {new Date(selected + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-          </p>
-          <div className="space-y-1" style={{ color: "var(--text-secondary)" }}>
-            {predPeriodDates.has(selected) && (
-              <p className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--accent-plum)" }} />
-                Predicted next period start
-              </p>
-            )}
-            {forecastWindow.has(selected) && !predPeriodDates.has(selected) && (
-              <p>Within 80% forecast window (±{prediction?.uncertaintyDays}d)</p>
-            )}
-            {fertileWindow.has(selected) && (
-              <p className="flex items-center gap-1.5">
-                <Heart className="w-3.5 h-3.5 text-green-400" />
-                Estimated fertile window (statistical estimate only)
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
+      {/* Period Modal */}
       {(showForm || editing) && (
         <PeriodForm
           initial={editing || undefined}
