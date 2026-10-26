@@ -1,0 +1,15 @@
+{
+  "baseline_mae": 1.912,
+  "random_forest_mae": 1.745,
+  "gradient_boosting_mae": 1.815,
+  "cycle_sync_mae": 2.730,
+  "approved_model": "random_forest",
+  "approved_mae": 1.745,
+  "calibrated_uncertainty_days": 2.7,
+  "interval_coverage_pct": 80.0,
+  "training_samples": 1050,
+  "test_samples": 600,
+  "model_version": "veyora-ml-v1",
+  "evaluation_protocol": "walk_forward_chronological_split",
+  "data_type": "synthetic_clinical_simulation"
+}

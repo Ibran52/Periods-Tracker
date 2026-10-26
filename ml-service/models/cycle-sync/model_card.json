@@ -1,0 +1,46 @@
+{
+  "language": "en",
+  "tags": ["keras", "tensorflow", "time-series", "menstrual-cycle-prediction", "healthcare"],
+  "license": "apache-2.0",
+  "pipeline_tag": "time-series-forecasting",
+  "model-index": [
+    {
+      "name": "lstm_combined_model",
+      "results": [
+        {
+          "task": {
+            "type": "time-series-forecasting",
+            "name": "Menstrual Cycle Prediction"
+          },
+          "metrics": [
+            {
+              "type": "mae",
+              "value": 1.2,
+              "name": "Mean Absolute Error (MAE)"
+            },
+            {
+              "type": "mse",
+              "value": 2.5,
+              "name": "Mean Squared Error (MSE)"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "model-details": {
+    "architecture": "LSTM",
+    "input_shape": [3, 2],
+    "output_shape": [2],
+    "framework": "Keras",
+    "backend": "tensorflow",
+    "description": "An LSTM model trained on menstrual cycle data to predict next cycle length and period duration.",
+    "trained_dataset": [
+      "irregular_cycle_data.csv",
+      "regular_cycle_data.csv",
+      "synthetic_data.csv"
+    ],
+    "created_by": "VishSinh",
+    "last_trained_on": "2025-03-21"
+  }
+}

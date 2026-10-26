@@ -1,0 +1,18 @@
+{
+  "short_name": "Veyora",
+  "name": "Veyora — Cycle Tracking & Prediction",
+  "icons": [
+    {
+      "src": "/veyora-icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0c0a12",
+  "theme_color": "#a855f7",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/"
+}
