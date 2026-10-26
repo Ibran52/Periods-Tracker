@@ -1,5 +1,45 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
+
+@theme {
+  --color-plum-50: #fbf6fb;
+  --color-plum-100: #f6edf5;
+  --color-plum-200: #eddceb;
+  --color-plum-300: #dfc1dc;
+  --color-plum-400: #cc9ec8;
+  --color-plum-500: #b57ab0;
+  --color-plum-600: #995e94;
+  --color-plum-700: #7c4978;
+  --color-plum-800: #583b58;
+  --color-plum-900: #4a324a;
+  --color-plum-950: #301e30;
+
+  --color-blush-50: #fdf8fa;
+  --color-blush-100: #faf5f7;
+  --color-blush-200: #f5e6ed;
+  --color-blush-300: #eed2df;
+  --color-blush-400: #e4b4cb;
+  --color-blush-500: #d985b7;
+  --color-blush-600: #c767a1;
+  --color-blush-700: #ad4d86;
+  --color-blush-800: #8e406e;
+  --color-blush-900: #74385b;
+
+  --color-phase-menstruation: #E05A8D;
+  --color-phase-follicular: #F69988;
+  --color-phase-ovulation: #D884B6;
+  --color-phase-luteal: #9D72BE;
+
+  --color-softsurface: #FFFFFF;
+  --color-softbg: #FAF5F7;
+  --color-softborder: #EFE4EC;
+
+  --font-family-sans: 'Plus Jakarta Sans', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --shadow-soft: 0 10px 30px -10px rgba(180, 140, 170, 0.12);
+  --shadow-card: 0 8px 24px -6px rgba(140, 100, 130, 0.08);
+  --shadow-glow: 0 0 40px rgba(224, 90, 141, 0.15);
+  --shadow-plum: 0 8px 20px -4px rgba(80, 55, 80, 0.3);
+}
 
 /* Light theme (default inspired by reference image) */
 :root {
